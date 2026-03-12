@@ -29,10 +29,13 @@ No more 12 separate meeting summaries that nobody reads.
 ## How to use
 
 1. Download `boildown.html`
-2. Open it in Chrome
-3. Paste your meeting transcript
-4. Hit **Process Transcript**
-5. Next meeting — paste again, it remembers everything
+2. Get a free Anthropic API key at [console.anthropic.com](https://console.anthropic.com) — takes 2 minutes
+3. Open `boildown.html` in Chrome
+4. Paste your API key into the key field at the top (it starts with `sk-ant-...`)
+5. Paste your meeting transcript and hit **Process Transcript**
+6. Next meeting — paste again, it remembers everything
+
+> ⚠️ **API Key Safety:** Your key is never saved or sent anywhere except Anthropic's API directly. That said — keep this tool for local use only. Do not hardcode your key into the file before sharing or publishing publicly. Recommended: set a spending limit at [console.anthropic.com](https://console.anthropic.com) just in case.
 
 ## Tech
 
