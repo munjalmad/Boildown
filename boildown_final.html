@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Requirements Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,700;0,900;1,400&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #f4f1eb;
+    --surface: #ffffff;
+    --surface2: #f9f7f3;
+    --border: #e5e0d5;
+    --text: #1a1714;
+    --subtle: #8a8278;
+    --accent: #c84b31;
+    --accent-soft: #fdf0ed;
+    --green: #2d6a4f;
+    --green-soft: #eaf4f0;
+    --amber: #b45309;
+    --amber-soft: #fef3c7;
+    --blue: #1e40af;
+    --blue-soft: #eff6ff;
+    --shadow: 0 2px 12px rgba(26,23,20,0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    font-family: 'DM Mono', monospace;
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* Header */
+  .header {
+    background: var(--text);
+    color: var(--bg);
+    padding: 20px 40px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-title {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+  }
+
+  .header-title span {
+    color: var(--accent);
+  }
+
+  .header-meta {
+    font-size: 11px;
+    color: #8a8278;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* Layout */
+  .app {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 24px;
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 24px;
+    align-items: flex-start;
+  }
+
+  /* Left panel — input */
+  .input-panel {
+    position: sticky;
+    top: 80px;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+
+  .panel-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface2);
+  }
+
+  .panel-title {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--subtle);
+  }
+
+  .meeting-count {
+    font-size: 11px;
+    background: var(--text);
+    color: var(--bg);
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+
+  .panel-body {
+    padding: 20px;
+  }
+
+  .field-label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--subtle);
+    margin-bottom: 8px;
+  }
+
+  .meeting-name-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    background: var(--surface2);
+    color: var(--text);
+    margin-bottom: 16px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .meeting-name-input:focus {
+    border-color: var(--accent);
+  }
+
+  .transcript-area {
+    width: 100%;
+    min-height: 260px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    line-height: 1.7;
+    background: var(--surface2);
+    color: var(--text);
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .transcript-area:focus {
+    border-color: var(--accent);
+  }
+
+  .transcript-area::placeholder {
+    color: #c4bdb4;
+  }
+
+  .process-btn {
+    width: 100%;
+    margin-top: 14px;
+    padding: 14px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: opacity 0.15s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .process-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  .process-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+
+  .spinner.active { display: block; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Meeting history pills */
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  .history-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.1s;
+    font-size: 12px;
+  }
+
+  .history-item:hover { background: var(--surface2); }
+  .history-item.active { background: var(--accent-soft); }
+
+  .history-name { font-weight: 500; }
+  .history-date { font-size: 10px; color: var(--subtle); }
+
+  /* Right panel — output */
+  .output-panel { display: flex; flex-direction: column; gap: 16px; }
+
+  /* Stats bar */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: var(--shadow);
+  }
+
+  .stat-num {
+    font-family: 'Fraunces', serif;
+    font-size: 32px;
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-num.red { color: var(--accent); }
+  .stat-num.green { color: var(--green); }
+  .stat-num.amber { color: var(--amber); }
+  .stat-num.blue { color: var(--blue); }
+
+  .stat-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--subtle);
+  }
+
+  /* Requirements section */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .section-title {
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .section-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .badge-new { background: var(--blue-soft); color: var(--blue); }
+  .badge-updated { background: var(--amber-soft); color: var(--amber); }
+  .badge-open { background: var(--accent-soft); color: var(--accent); }
+  .badge-done { background: var(--green-soft); color: var(--green); }
+
+  /* Requirement cards */
+  .req-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+    margin-bottom: 8px;
+    transition: border-color 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .req-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+  }
+
+  .req-card.status-open::before { background: var(--accent); }
+  .req-card.status-resolved::before { background: var(--green); }
+  .req-card.status-changed::before { background: var(--amber); }
+  .req-card.status-new::before { background: var(--blue); }
+
+  .req-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .req-text {
+    font-size: 13px;
+    line-height: 1.6;
+    flex: 1;
+  }
+
+  .req-badges {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .req-badge {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 500;
+  }
+
+  .req-meta {
+    font-size: 10px;
+    color: var(--subtle);
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .req-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .req-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    cursor: pointer;
+    color: var(--subtle);
+    transition: all 0.1s;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .req-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .req-btn.resolve { border-color: var(--green); color: var(--green); }
+  .req-btn.resolve:hover { background: var(--green-soft); }
+
+  /* Next steps */
+  .next-step-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    box-shadow: var(--shadow);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .step-checkbox {
+    width: 16px; height: 16px;
+    border: 2px solid var(--border);
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+
+  .step-checkbox.checked {
+    background: var(--green);
+    border-color: var(--green);
+    color: white;
+    font-size: 10px;
+  }
+
+  .step-content { flex: 1; }
+
+  .step-text {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .step-text.done {
+    text-decoration: line-through;
+    color: var(--subtle);
+  }
+
+  .step-meta {
+    font-size: 10px;
+    color: var(--subtle);
+    margin-top: 4px;
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--subtle);
+  }
+
+  .empty-icon {
+    font-size: 40px;
+    margin-bottom: 16px;
+    opacity: 0.4;
+  }
+
+  .empty-title {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .empty-sub { font-size: 12px; line-height: 1.7; }
+
+  /* Error */
+  .error-box {
+    background: var(--accent-soft);
+    border: 1px solid #f5c6c0;
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-size: 12px;
+    color: var(--accent);
+    display: none;
+  }
+
+  /* Export btn */
+  .export-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    cursor: pointer;
+    color: var(--subtle);
+    transition: all 0.1s;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .export-btn:hover { border-color: var(--text); color: var(--text); }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+
+  /* Processing overlay */
+  .processing-msg {
+    background: var(--text);
+    color: var(--bg);
+    border-radius: 8px;
+    padding: 16px 20px;
+    font-size: 12px;
+    display: none;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .processing-msg.active { display: flex; }
+
+  .processing-spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(244,241,235,0.2);
+    border-top-color: var(--bg);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title">req<span>.</span>tracker</div>
+  <div class="header-meta">Meeting → Requirements → Living Doc</div>
+</div>
+
+<div class="app">
+
+  <!-- Left: Input Panel -->
+  <div class="input-panel">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">New Meeting</div>
+        <div class="meeting-count" id="meetingCount">0 meetings</div>
+      </div>
+      <div class="panel-body">
+        <div class="field-label">Anthropic API Key</div>
+        <input class="meeting-name-input" id="apiKey" placeholder="sk-ant-..." type="password"/>
+
+        <div class="field-label">Meeting Name</div>
+        <input class="meeting-name-input" id="meetingName" placeholder="e.g. Sprint Planning — Mar 12" type="text"/>
+
+        <div class="field-label">Paste Webex Transcript</div>
+        <textarea class="transcript-area" id="transcriptInput" placeholder="Paste your Webex transcript here...
+
+The AI will:
+— Strip jargon and filler
+— Extract clean requirements
+— Pull out next steps with owners
+— Update your living doc (new, changed, resolved)
+
+Works best with full transcripts but
+rough notes work too."></textarea>
+
+        <button class="process-btn" id="processBtn" onclick="processTranscript()">
+          <div class="spinner" id="spinner"></div>
+          <span id="btnText">Process Transcript</span>
+        </button>
+      </div>
+
+      <div class="error-box" id="errorBox"></div>
+
+      <!-- Meeting history -->
+      <div class="history-list" id="historyList" style="display:none">
+        <div class="panel-title" style="margin-bottom:8px">Meeting History</div>
+        <!-- populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Output Panel -->
+  <div class="output-panel" id="outputPanel">
+    <div class="panel" style="padding:0">
+      <div id="emptyState" class="empty-state">
+        <div class="empty-icon">📋</div>
+        <div class="empty-title">No requirements yet</div>
+        <div class="empty-sub">Paste your first Webex transcript<br/>and hit Process to get started.</div>
+      </div>
+
+      <div id="mainOutput" style="display:none; padding: 24px;">
+        <!-- Stats -->
+        <div class="stats-bar" id="statsBar"></div>
+
+        <!-- Processing msg -->
+        <div class="processing-msg" id="processingMsg" style="margin-top:16px">
+          <div class="processing-spinner"></div>
+          <span>Analysing transcript and updating requirements...</span>
+        </div>
+
+        <!-- Requirements -->
+        <div style="margin-top: 24px;">
+          <div class="toolbar">
+            <div class="section-header" style="margin-bottom:0">
+              <div class="section-title">Requirements</div>
+            </div>
+            <button class="export-btn" onclick="exportMarkdown()">↓ Export MD</button>
+          </div>
+          <div id="requirementsList" style="margin-top:12px"></div>
+        </div>
+
+        <!-- Next Steps -->
+        <div style="margin-top: 24px;">
+          <div class="section-header">
+            <div class="section-title">Next Steps</div>
+          </div>
+          <div id="nextStepsList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────────
+let state = {
+  meetings: [],      // [{id, name, date, transcript}]
+  requirements: [],  // [{id, text, status, source, firstSeen, lastUpdated, category}]
+  nextSteps: []      // [{id, text, owner, done, source, date}]
+};
+
+// Load from localStorage
+function loadState() {
+  try {
+    const saved = localStorage.getItem('req_tracker_state');
+    if (saved) state = JSON.parse(saved);
+  } catch(e) {}
+  renderAll();
+}
+
+function saveState() {
+  localStorage.setItem('req_tracker_state', JSON.stringify(state));
+}
+
+// ─── Process Transcript ──────────────────────────────────────────────────
+async function processTranscript() {
+  const transcript = document.getElementById('transcriptInput').value.trim();
+  const meetingName = document.getElementById('meetingName').value.trim() || `Meeting ${state.meetings.length + 1}`;
+
+  if (!transcript) {
+    showError('Please paste a transcript first.');
+    return;
+  }
+
+  // UI loading state
+  setLoading(true);
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('mainOutput').style.display = 'block';
+  document.getElementById('processingMsg').classList.add('active');
+
+  // Build context of existing requirements for the AI
+  const existingReqs = state.requirements.length > 0
+    ? `\n\nEXISTING REQUIREMENTS (from previous meetings):\n${state.requirements.map((r,i) => `${i+1}. [${r.status.toUpperCase()}] ${r.text}`).join('\n')}`
+    : '\n\nNo existing requirements yet — this is the first meeting.';
+
+  const prompt = `You are a product requirements analyst. Your job is to process meeting transcripts and extract clean, jargon-free requirements and next steps.
+
+MEETING NAME: ${meetingName}
+${existingReqs}
+
+TRANSCRIPT TO PROCESS:
+${transcript}
+
+INSTRUCTIONS:
+1. Strip ALL jargon, filler words, and meeting noise
+2. Extract concrete product/feature requirements in plain English
+3. For each requirement, determine if it is:
+   - "new" — not in existing requirements
+   - "updated" — modifies or clarifies an existing requirement (reference which one)
+   - "resolved" — explicitly closed/decided in this meeting
+   - "open" — still unresolved
+4. Extract next steps with owner names if mentioned
+5. Be concise — each requirement should be one clear sentence
+
+Respond ONLY with valid JSON in this exact format:
+{
+  "requirements": [
+    {
+      "text": "Clear requirement in plain English",
+      "status": "new|open|updated|resolved",
+      "category": "Feature|UX|Technical|Business|Data",
+      "updatesExisting": "exact text of existing requirement it updates, or null",
+      "note": "brief context if needed, or null"
+    }
+  ],
+  "nextSteps": [
+    {
+      "text": "Clear action item",
+      "owner": "Name or Team or null"
+    }
+  ]
+}`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 8192,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await response.json();
+    if (!response.ok || data.error) { throw new Error("API Error: " + (data.error?.message || JSON.stringify(data))); }
+    const rawText = data.content[0].text.trim();
+
+    // Parse JSON
+    const clean = rawText.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+
+    // Save meeting
+    const meetingId = Date.now().toString();
+    state.meetings.push({
+      id: meetingId,
+      name: meetingName,
+      date: new Date().toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })
+    });
+
+    // Process requirements
+    parsed.requirements.forEach(req => {
+      if (req.updatesExisting) {
+        // Find and update existing
+        const existing = state.requirements.find(r =>
+          r.text.toLowerCase().includes(req.updatesExisting.toLowerCase().slice(0, 30))
+        );
+        if (existing) {
+          existing.text = req.text;
+          existing.status = req.status;
+          existing.lastUpdated = meetingName;
+          existing.changeType = 'updated';
+          return;
+        }
+      }
+
+      // Check for resolved
+      if (req.status === 'resolved') {
+        const existing = state.requirements.find(r =>
+          r.text.toLowerCase().includes(req.text.toLowerCase().slice(0, 30))
+        );
+        if (existing) {
+          existing.status = 'resolved';
+          existing.lastUpdated = meetingName;
+          existing.changeType = 'resolved';
+          return;
+        }
+      }
+
+      // Add new
+      state.requirements.push({
+        id: meetingId + '_' + Math.random().toString(36).slice(2),
+        text: req.text,
+        status: req.status === 'resolved' ? 'resolved' : 'open',
+        category: req.category || 'Feature',
+        firstSeen: meetingName,
+        lastUpdated: meetingName,
+        changeType: 'new',
+        note: req.note || null
+      });
+    });
+
+    // Add next steps
+    parsed.nextSteps.forEach(step => {
+      state.nextSteps.push({
+        id: meetingId + '_' + Math.random().toString(36).slice(2),
+        text: step.text,
+        owner: step.owner || null,
+        done: false,
+        source: meetingName,
+        date: new Date().toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })
+      });
+    });
+
+    saveState();
+    renderAll();
+
+    // Clear input
+    document.getElementById('transcriptInput').value = '';
+    document.getElementById('meetingName').value = '';
+    hideError();
+
+  } catch(err) {
+    showError('Could not process transcript. Check your connection and try again. (' + err.message + ')');
+  }
+
+  setLoading(false);
+  document.getElementById('processingMsg').classList.remove('active');
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────
+function renderAll() {
+  renderStats();
+  renderRequirements();
+  renderNextSteps();
+  renderHistory();
+
+  if (state.requirements.length > 0 || state.nextSteps.length > 0) {
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('mainOutput').style.display = 'block';
+  }
+}
+
+function renderStats() {
+  const total = state.requirements.length;
+  const open = state.requirements.filter(r => r.status === 'open').length;
+  const resolved = state.requirements.filter(r => r.status === 'resolved').length;
+  const newOnes = state.requirements.filter(r => r.changeType === 'new').length;
+  const openSteps = state.nextSteps.filter(s => !s.done).length;
+
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-num blue">${total}</div>
+      <div class="stat-label">Total Reqs</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num red">${open}</div>
+      <div class="stat-label">Open</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num green">${resolved}</div>
+      <div class="stat-label">Resolved</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num amber">${openSteps}</div>
+      <div class="stat-label">Next Steps</div>
+    </div>
+  `;
+}
+
+function renderRequirements() {
+  const list = document.getElementById('requirementsList');
+  if (!state.requirements.length) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--subtle);padding:8px 0">No requirements yet.</div>';
+    return;
+  }
+
+  // Sort: new/updated first, then open, then resolved
+  const sorted = [...state.requirements].sort((a,b) => {
+    const order = { new: 0, updated: 1, open: 2, resolved: 3 };
+    return (order[a.changeType] || 2) - (order[b.changeType] || 2);
+  });
+
+  list.innerHTML = sorted.map(req => {
+    const statusClass = req.changeType === 'new' ? 'status-new'
+      : req.changeType === 'updated' ? 'status-changed'
+      : req.status === 'resolved' ? 'status-resolved'
+      : 'status-open';
+
+    const badges = [];
+    if (req.changeType === 'new') badges.push('<span class="req-badge badge-new">New</span>');
+    if (req.changeType === 'updated') badges.push('<span class="req-badge badge-updated">Updated</span>');
+    if (req.status === 'resolved') badges.push('<span class="req-badge badge-done">Resolved</span>');
+    if (req.category) badges.push(`<span class="req-badge" style="background:var(--surface2);color:var(--subtle)">${req.category}</span>`);
+
+    const resolveBtn = req.status !== 'resolved'
+      ? `<button class="req-btn resolve" onclick="resolveReq('${req.id}')">Mark Resolved</button>`
+      : `<button class="req-btn" onclick="reopenReq('${req.id}')">Reopen</button>`;
+
+    return `
+      <div class="req-card ${statusClass}" id="req-${req.id}">
+        <div class="req-top">
+          <div class="req-text">${req.text}</div>
+          <div class="req-badges">${badges.join('')}</div>
+        </div>
+        ${req.note ? `<div style="font-size:11px;color:var(--subtle);margin-bottom:6px;font-style:italic">${req.note}</div>` : ''}
+        <div class="req-meta">
+          <span>First seen: ${req.firstSeen}</span>
+          ${req.lastUpdated !== req.firstSeen ? `<span>Updated: ${req.lastUpdated}</span>` : ''}
+        </div>
+        <div class="req-actions">
+          ${resolveBtn}
+          <button class="req-btn" onclick="deleteReq('${req.id}')">Remove</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderNextSteps() {
+  const list = document.getElementById('nextStepsList');
+  const open = state.nextSteps.filter(s => !s.done);
+  const done = state.nextSteps.filter(s => s.done);
+  const all = [...open, ...done];
+
+  if (!all.length) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--subtle);padding:8px 0">No next steps yet.</div>';
+    return;
+  }
+
+  list.innerHTML = all.map(step => `
+    <div class="next-step-card" id="step-${step.id}">
+      <div class="step-checkbox ${step.done ? 'checked' : ''}" onclick="toggleStep('${step.id}')">
+        ${step.done ? '✓' : ''}
+      </div>
+      <div class="step-content">
+        <div class="step-text ${step.done ? 'done' : ''}">${step.text}</div>
+        <div class="step-meta">
+          ${step.owner ? `<span>Owner: ${step.owner}</span> · ` : ''}
+          <span>From: ${step.source}</span> · <span>${step.date}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  if (!state.meetings.length) {
+    list.style.display = 'none';
+    return;
+  }
+  list.style.display = 'block';
+  document.getElementById('meetingCount').textContent = `${state.meetings.length} meeting${state.meetings.length !== 1 ? 's' : ''}`;
+
+  list.innerHTML = `<div class="panel-title" style="margin-bottom:8px">Meeting History</div>` +
+    [...state.meetings].reverse().map(m => `
+      <div class="history-item">
+        <div class="history-name">${m.name}</div>
+        <div class="history-date">${m.date}</div>
+      </div>
+    `).join('');
+}
+
+// ─── Actions ─────────────────────────────────────────────────────────────
+function resolveReq(id) {
+  const req = state.requirements.find(r => r.id === id);
+  if (req) { req.status = 'resolved'; req.changeType = 'resolved'; saveState(); renderAll(); }
+}
+
+function reopenReq(id) {
+  const req = state.requirements.find(r => r.id === id);
+  if (req) { req.status = 'open'; req.changeType = 'open'; saveState(); renderAll(); }
+}
+
+function deleteReq(id) {
+  state.requirements = state.requirements.filter(r => r.id !== id);
+  saveState(); renderAll();
+}
+
+function toggleStep(id) {
+  const step = state.nextSteps.find(s => s.id === id);
+  if (step) { step.done = !step.done; saveState(); renderAll(); }
+}
+
+// ─── Export ───────────────────────────────────────────────────────────────
+function exportMarkdown() {
+  const open = state.requirements.filter(r => r.status === 'open');
+  const resolved = state.requirements.filter(r => r.status === 'resolved');
+  const openSteps = state.nextSteps.filter(s => !s.done);
+
+  let md = `# Requirements — Living Doc\n_Last updated: ${new Date().toLocaleDateString()}_\n\n`;
+  md += `## Open Requirements (${open.length})\n\n`;
+  open.forEach((r,i) => { md += `${i+1}. ${r.text}\n   - Category: ${r.category} | First seen: ${r.firstSeen}\n`; });
+  md += `\n## Resolved Requirements (${resolved.length})\n\n`;
+  resolved.forEach((r,i) => { md += `${i+1}. ~~${r.text}~~\n`; });
+  md += `\n## Open Next Steps (${openSteps.length})\n\n`;
+  openSteps.forEach((s,i) => { md += `- [ ] ${s.text}${s.owner ? ` _(${s.owner})_` : ''}\n`; });
+
+  const blob = new Blob([md], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `requirements-${new Date().toISOString().slice(0,10)}.md`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// ─── UI helpers ───────────────────────────────────────────────────────────
+function setLoading(on) {
+  document.getElementById('processBtn').disabled = on;
+  document.getElementById('spinner').classList.toggle('active', on);
+  document.getElementById('btnText').textContent = on ? 'Processing...' : 'Process Transcript';
+}
+
+function showError(msg) {
+  const box = document.getElementById('errorBox');
+  box.textContent = msg;
+  box.style.display = 'block';
+}
+
+function hideError() {
+  document.getElementById('errorBox').style.display = 'none';
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────
+loadState();
+</script>
+</body>
+</html>
